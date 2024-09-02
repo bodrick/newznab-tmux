@@ -21,7 +21,7 @@ rm -fr /tmp/tmux
 
 git clone https://github.com/tmux/tmux.git /tmp/tmux
 
-cd /tmp/tmux
+cd /tmp/tmux || exit
 
 git fetch --all --tags --prune
 
@@ -33,6 +33,6 @@ sh autogen.sh
 
 sudo make install
 
-cd -
+cd - || exit
 
 rm -fr /tmp/tmux

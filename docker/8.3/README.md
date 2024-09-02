@@ -2,7 +2,7 @@
 
 **Author:** [Fossil01](https://github.com/Fossil01)
 
-### Caution: This setup is intended solely for development use. For production deployments, it is recommended to construct your own Docker containers.
+### Caution: This setup is intended solely for development use. For production deployments, it is recommended to construct your own Docker containers
 
 This development environment is composed of several key containers: App, MariaDB, Redis, Manticore, and Mailpit. The App container hosts nginx and PHP-FPM, and includes a bind mount that links to the root directory of this project. Supervisord is utilized to manage these services in the background.
 
@@ -25,12 +25,12 @@ Mailpit is used as a fake mailserver which catches all e-mails in one inbox. You
 ## Setup
 
 - Edit your projects `.env` file and add a `COMPOSER_AUTH` entry.
-  - Get a Github token: https://github.com/settings/tokens/new?scopes=&description=NNTMux+Docker and set the expiration to **No expiration**
+  - Get a Github token: <https://github.com/settings/tokens/new?scopes=&description=NNTMux+Docker> and set the expiration to **No expiration**
   - Example: `COMPOSER_AUTH='{"github-oauth": {"github.com": "ghp_xxxxxxxx"}}'`
 - `sail build --no-cache`
 - `sail up -d`
 
-### You might have to edit your Laravel `.env` file:
+### You might have to edit your Laravel `.env` file
 
 ```
 DB_HOST=mariadb
@@ -45,6 +45,7 @@ ELASTICSEARCH_HOST=elasticsearch
 ```
 
 ## Database
+
 On first run MariaDB will create a user and password based on your projects .env file:
 
 ```
@@ -55,7 +56,9 @@ DB_PASSWORD=
 You will need to manually import a SQL dump or run `sail artisan nntmux:install` if this is a new installation.
 
 ## Networking
+
 Sail will create a Docker network called `sail` with these ports mapped to your host:
+
 - HTTP: `80`
 - Vite: `5173`
 - Manticore: `9306`(SQL) & `9308`(HTTP)
