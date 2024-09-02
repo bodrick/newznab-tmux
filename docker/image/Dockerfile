@@ -9,11 +9,13 @@ RUN echo "[multilib]" >> /etc/pacman.conf && \
 
 RUN pacman --noconfirm -Syu \
     git \
-    vim \
+    neovim \
     tmux \
     zsh
 
 RUN chsh -s /bin/zsh root && \
+    mkdir ~/.zsh.local && \
+    echo -e "alias vim=nvim\nalias sudo='sudo '" > ~/.zsh.local/aliases.zsh && \
     curl -Lo- http://bit.ly/2pztvLf | bash
 
 RUN pacman --noconfirm -Syu \
@@ -39,7 +41,11 @@ RUN pacman --noconfirm -Syu \
     php-fpm \
     php-gd \
     php-intl \
+    php-memcached \
+    php-sodium \
+    powerline \
     powerline-fonts \
+    python-neovim \
     sudo \
     supervisor \
     the_silver_searcher \
@@ -48,11 +54,20 @@ RUN pacman --noconfirm -Syu \
     unzip \
     vnstat \
     wget \
-    which
+    which \
+    yarn
 
-RUN wget http://pear.php.net/go-pear.phar -O /tmp/go-pear.phar && \
-    php /tmp/go-pear.phar && \
-    rm /tmp/go-pear.phar
+# Download and install zip extension
+RUN curl -LO https://pecl.php.net/get/zip && \
+    tar xzf zip && \
+    rm zip && \
+    cd zip-* && \
+    phpize && \
+    ./configure && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf zip-*
 
 RUN mkdir -p /var/log/php && \
     ln -sf /dev/stderr /var/log/php/php-fpm.error.log && \
@@ -63,10 +78,16 @@ RUN sed -i  \
         -e "s/group = http/group = nntmux/" \
         -e "s#;access.log = log/\$pool.access.log#access.log = /var/log/php/php-fpm.access.log#" \
         /etc/php/php-fpm.d/www.conf && \
-    sed -i "s#error_log = syslog#error_log = /var/log/php/php-fpm.error.log#" /etc/php/php-fpm.conf
+    sed -i "s#error_log = syslog#error_log = /var/log/php/php-fpm.error.log#" /etc/php/php-fpm.conf && \
+    sed -i \
+        -e 's/^extension=curl/;extension=curl/' \
+        -e 's/^extension=zip/;extension=zip/' \
+        /etc/php/php.ini
 
-RUN pecl channel-update pecl.php.net && \
-    pecl install zip
+COPY ./root/nginx.conf /etc/nginx/nginx.conf
+COPY ./root/supervisor.d /etc/supervisor.d
+COPY ./root/php-overrides.ini /etc/php/conf.d/overrides.ini
+COPY ./root/php-overrides.local.ini /etc/php/conf.d/overrides.local.ini
 
 RUN groupadd --gid 1000 nntmux && \
     useradd --create-home --system --shell /usr/sbin/zsh --uid 1000 --gid 1000 nntmux && \
@@ -79,27 +100,18 @@ RUN groupadd --gid 1000 nntmux && \
 
 USER nntmux
 
-RUN git clone --depth 1 https://aur.archlinux.org/yay.git /tmp/yay && \
-    cd /tmp/yay && \
-    makepkg --noconfirm -si && \
-    yay --afterclean --removemake --save && \
-    rm -rf /tmp/yay
+# COPY ./docker/composer-auth.json /home/nntmux/.composer/auth.json
+# COPY ./docker/.mytop /home/nntmux/.mytop
 
-RUN yay --noconfirm -Sy \
-    php-imagick \
-    php-memcached \
-    php-sodium
-    # \ tcptrack
-
-RUN curl -Lo- http://bit.ly/2pztvLf | bash
-
-# We disable it here because we enable it in the overrides file which affects
-# both php-fpm as well as cli
-RUN sudo sed -i \
-        -e 's/^extension=curl/;extension=curl/' \
-        -e 's/^extension=zip/;extension=zip/' \
-        /etc/php/php.ini
+RUN mkdir ~/.zsh.local && \
+    echo -e "alias vim=nvim\nalias sudo='sudo '" > ~/.zsh.local/aliases.zsh && \
+    curl -Lo- http://bit.ly/2pztvLf | bash
 
 WORKDIR /site
 
-CMD ["sudo", "/usr/sbin/supervisord", "--nodaemon"]
+RUN git clone --depth 1 https://github.com/bodrick/newznab-tmux.git . && \
+    composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+# RUN sudo pacman --noconfirm -Sy openssh
+
+CMD ["sudo", "--preserve-env", "/usr/sbin/supervisord", "--nodaemon"]

@@ -1,19 +1,15 @@
 services:
   web: &web
     build:
-      dockerfile: ./docker/production/Dockerfile
+      dockerfile: ./docker/image/Dockerfile
       context: .
     restart: unless-stopped
     volumes:
       - ./:/site
-      - ./docker/production/root/.zsh_history:/root/.zsh_history
-      - ./docker/production/root/.zsh_history:/home/nntmux/.zsh_history
-      - ./docker/production/root/.mytop:/home/nntmux/.mytop
-      - ./docker/production/root/nginx.conf:/etc/nginx/nginx.conf
-      - ./docker/production/root/supervisor.d:/etc/supervisor.d
-      - ./docker/production/root/composer-auth.json:/home/nntmux/.composer/auth.json
-      - ./docker/production/root/php-overrides.ini:/etc/php/conf.d/overrides.ini
-      - ./docker/production/root/php-overrides.local.ini:/etc/php/conf.d/overrides.local.ini
+      - ./docker/image/root/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/image/root/supervisor.d:/etc/supervisor.d
+      - ./docker/image/root/php-overrides.ini:/etc/php/conf.d/overrides.ini
+      - ./docker/image/root/php-overrides.local.ini:/etc/php/conf.d/overrides.local.ini
     env_file: .env
     ports:
       - 80
@@ -47,22 +43,19 @@ services:
     image: redis:alpine
     restart: unless-stopped
     volumes:
-      - $PWD/docker/production/root/redis-data;/data
-      - $PWD/docker/production/root/redis.conf:/usr/local/etc/redis/redis.conf
+      - $PWD/docker/image/root/redis-data;/data
 
   manticore:
     image: manticoresearch/manticore
     restart: unless-stopped
     volumes:
-      - $PWD/docker/production/root/manticore-data;/var/lib/manticore/data
-      - $PWD/docker/production/root/sphinx.conf:/etc/sphinxsearch/sphinx.conf
+      - $PWD/docker/image/root/manticore-data;/var/lib/manticore/data
 
   mariadb:
     image: mariadb:11
     restart: unless-stopped
     volumes:
-      - $PWD/docker/production/root/my.cnf:/etc/mysql/conf.d/newsnab-tmux.cnf
-      - $PWD/docker/production/root/mariadb-data:/var/lib/mysql
+      - $PWD/docker/image/root/mariadb-data:/var/lib/mysql
       - $PWD:/var/www/NNTmux/
     env_file: .env
     environment:
